@@ -96,13 +96,12 @@ The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below 
 **Goal:** Establish the correct data shape before any UI work. All later phases depend on this.
 
 **Tasks:**
-- Rename the Xcode target/bundle from `claude_test` to `LootList`; rename `claude_testApp.swift` → `LootListApp.swift`
-- Choose and add an open source license (e.g. MIT or Apache 2.0); add `LICENSE` file to the repo root and `NSHumanReadableCopyright` to `Info.plist`
+- ~~Rename the Xcode target/bundle from `claude_test` to `LootList`; rename `claude_testApp.swift` → `LootListApp.swift`~~ ✓ (some internal `.pbxproj` references to `claude_test` remain but are considered acceptable for now)
 - Establish feature-based folder structure (e.g. `Campaigns/`, `Loot/`, `Carriers/`, `EventLog/`, `Settings/`, `Shared/`)
 - Add `Campaign` SwiftData model: `id: UUID = UUID()`, `name: String = ""`, `createdAt: Date = .now`
-- Add `CustomCategory` SwiftData model: `id: UUID = UUID()`, `name: String = ""`, `emoji: String = ""`, `campaign` relationship (optional)
-- Add `LootEvent` SwiftData model: `id: UUID = UUID()`, `type` (enum: found/sold/used), `itemName: String = ""`, `timestamp: Date = .now`, `campaign` relationship (optional)
-- Update `LootItem`: all properties get default values; `campaign` relationship made optional; `customCategory: CustomCategory?` added alongside existing `LootCategory` field; computed `displayCategory` returns whichever is set; remove any `@Attribute(.unique)` usage
+- Replace `LootCategory` enum with a `LootCategory` SwiftData model: `id`, `name`, `emoji`; the seven defaults are seeded on first launch and can be freely modified or deleted; user-created categories sit alongside them
+- Add `LootEvent` SwiftData model: `id: UUID = UUID()`, `type` (`LootEventType` enum: found/sold/used), `itemName: String = ""`, `timestamp: Date = .now`, `campaign` relationship (optional)
+- Update `LootItem`: remove `LootCategory` enum reference; `category: LootCategory?`; all properties get default values; `campaign` relationship made optional; remove any `@Attribute(.unique)` usage
 - Update `Carrier`: `campaign` relationship made optional; remove `@Attribute(.unique)` from `name`
 - Create `AppState` as an `@Observable @MainActor` class holding `activeCampaign: Campaign?`; inject into the environment via `@State` in `LootListApp`
 - Implement versioned SwiftData schema migration from v1 (current) → v2 (with Campaign); existing items/carriers land in an auto-created "Default Campaign"
@@ -111,7 +110,8 @@ The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below 
 - All SwiftData model properties have defaults/are optional from the start — CloudKit requires this and it avoids a second migration later
 - `@Attribute(.unique)` removed from `Carrier.name` for the same CloudKit reason
 - `LootEvent` stores a String snapshot of the item name so the log survives item deletion
-- `CustomCategory` is campaign-scoped so different campaigns can have different category sets
+- `LootCategory` is a SwiftData model (not an enum); the seven built-ins are seeded data, not hardcoded cases — making categories fully customizable
+- Custom categories are app-wide, not campaign-scoped; variance between campaigns is expected to be low (future metrics will validate this)
 - Migration creates one "Default Campaign" and re-parents all orphaned items/carriers into it
 
 ---
@@ -160,13 +160,13 @@ The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below 
 
 ### Phase 5 — Custom Categories
 
-**Goal:** Users can define their own categories with a name and emoji, per campaign.
+**Goal:** Users can freely manage categories — the seven defaults are just a starting point.
 
 **Tasks:**
-- `CustomCategoryManagerView`: list of custom categories for the active campaign; inline add (name + emoji picker); swipe to delete
-- Accessible from the Carriers screen or a dedicated Settings screen
-- Update the category picker in `AddLootView` and `EditLootView` to show built-in categories first, then a "Custom" section with user-defined ones
-- Items assigned to a deleted custom category fall back to `.misc`
+- `CategoryManagerView`: app-wide list of all categories; inline add (name + emoji picker); swipe to delete any category
+- Accessible from Settings
+- Update the category picker in `AddLootView` and `EditLootView` to query all `LootCategory` records
+- Items whose category is deleted have their `category` set to `nil`
 
 ---
 
@@ -226,6 +226,7 @@ The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below 
 **Goal:** Ensure the app meets App Store submission requirements and users understand the terms under which they use it.
 
 **Tasks:**
+- Choose and add an open source license (e.g. MIT or Apache 2.0); add `LICENSE` file to the repo root and `NSHumanReadableCopyright` to `Info.plist`
 - Draft and host a **Privacy Policy** (required by Apple for apps that collect any user data or use iCloud sharing); link it in the App Store listing and in-app under Settings
 - Draft an **End User License Agreement (EULA)**; decide whether to use Apple's standard EULA or a custom one; if custom, host it and link from Settings
 - Add a **third-party attributions** screen (Settings → Acknowledgements) listing any open source libraries used and their licenses
@@ -253,3 +254,5 @@ Everything listed under **Future Features** below.
 - Home screen widgets
 - PDF and Markdown export
 - Join code / link-based party sharing
+- Website launch page.  Includes link to say you are interested in Android/Web/Windows version.
+- Category usage metrics: track which categories are used across campaigns to validate whether category sets vary significantly between campaigns. Hypothesis: variance is low, justifying the app-wide category design.
