@@ -1,6 +1,6 @@
 //
-//  claude_testApp.swift
-//  claude_test
+//  LootListApp.swift
+//  LootList
 //
 //  Created by Kelley Rogers on 3/27/26.
 //
@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct claude_testApp: App {
+struct LootListApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

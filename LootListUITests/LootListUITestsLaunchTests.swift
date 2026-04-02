@@ -1,13 +1,13 @@
 //
-//  claude_testUITestsLaunchTests.swift
-//  claude_testUITests
+//  LootListUITestsLaunchTests.swift
+//  LootListUITests
 //
 //  Created by Kelley Rogers on 3/27/26.
 //
 
 import XCTest
 
-final class claude_testUITestsLaunchTests: XCTestCase {
+final class LootListUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
