@@ -58,6 +58,33 @@
 
 ## Implementation Plan
 
+### Development Workflow
+
+- **Code reviews**: Use [OpenAI Codex](https://openai.com/codex) to review code before merging each phase. Use Claude Code at extra high effort for reviews.
+- **Linting**: SwiftLint must return no warnings or errors before every commit.
+
+---
+
+### Architecture Standards
+
+These rules apply across every phase:
+
+- **Target**: iOS 26.0+, Swift 6.2+, strict Swift concurrency.
+- **Shared state**: `@Observable` classes marked `@MainActor`; passed via `@State` (owner) and `@Environment` / `@Bindable` (consumers). Never use `ObservableObject`, `@Published`, `@StateObject`, `@ObservedObject`, or `@EnvironmentObject`.
+- **Concurrency**: async/await throughout. No `DispatchQueue.main.async` or `Task.sleep(nanoseconds:)`.
+- **Formatting**: Always use `FormatStyle` APIs — never `DateFormatter`, `NumberFormatter`, or C-style `String(format:)`.
+- **Text search**: Always filter user-entered text with `localizedStandardContains()`, never `contains()`.
+- **UIKit**: Avoid entirely unless there is no SwiftUI equivalent. Flag any UIKit usage explicitly.
+- **Third-party libraries**: Do not add any without explicit approval.
+- **Project structure**: Feature-based folder layout; one type per file.
+- **Testing**: Unit tests for all core logic; UI tests only where unit tests are not possible.
+- **SwiftData + CloudKit constraints** (apply from Phase 1 since CloudKit is a v1 target):
+  - No `@Attribute(.unique)` on any model property.
+  - All model properties must have default values or be optional.
+  - All relationships must be optional.
+
+---
+
 ### Overview
 
 The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below brings it to the full v1 spec. Phases are ordered by dependency; later phases build on earlier ones.
@@ -69,16 +96,20 @@ The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below 
 **Goal:** Establish the correct data shape before any UI work. All later phases depend on this.
 
 **Tasks:**
-- Rename the Xcode target/bundle from `claude_test` to `LootList`
-- Add `Campaign` SwiftData model: `id`, `name`, `createdAt`
-- Add `CustomCategory` SwiftData model: `id`, `name`, `emoji`, `campaign` (relationship)
-- Add `LootEvent` SwiftData model: `id`, `type` (enum: found/sold/used), `itemName` (String snapshot), `timestamp`, `campaign` (relationship)
-- Update `LootItem`: add `campaign` relationship (required); add `customCategory: CustomCategory?` alongside the existing `LootCategory` enum field; add a computed `displayCategory` that returns whichever is set
-- Update `Carrier`: add `campaign` relationship (required)
+- Rename the Xcode target/bundle from `claude_test` to `LootList`; rename `claude_testApp.swift` → `LootListApp.swift`
+- Choose and add an open source license (e.g. MIT or Apache 2.0); add `LICENSE` file to the repo root and `NSHumanReadableCopyright` to `Info.plist`
+- Establish feature-based folder structure (e.g. `Campaigns/`, `Loot/`, `Carriers/`, `EventLog/`, `Settings/`, `Shared/`)
+- Add `Campaign` SwiftData model: `id: UUID = UUID()`, `name: String = ""`, `createdAt: Date = .now`
+- Add `CustomCategory` SwiftData model: `id: UUID = UUID()`, `name: String = ""`, `emoji: String = ""`, `campaign` relationship (optional)
+- Add `LootEvent` SwiftData model: `id: UUID = UUID()`, `type` (enum: found/sold/used), `itemName: String = ""`, `timestamp: Date = .now`, `campaign` relationship (optional)
+- Update `LootItem`: all properties get default values; `campaign` relationship made optional; `customCategory: CustomCategory?` added alongside existing `LootCategory` field; computed `displayCategory` returns whichever is set; remove any `@Attribute(.unique)` usage
+- Update `Carrier`: `campaign` relationship made optional; remove `@Attribute(.unique)` from `name`
+- Create `AppState` as an `@Observable @MainActor` class holding `activeCampaign: Campaign?`; inject into the environment via `@State` in `LootListApp`
 - Implement versioned SwiftData schema migration from v1 (current) → v2 (with Campaign); existing items/carriers land in an auto-created "Default Campaign"
-- Update `claude_testApp` entry point: register all new models in the `ModelContainer`; inject an `activeCampaign` environment object
 
 **Key decisions:**
+- All SwiftData model properties have defaults/are optional from the start — CloudKit requires this and it avoids a second migration later
+- `@Attribute(.unique)` removed from `Carrier.name` for the same CloudKit reason
 - `LootEvent` stores a String snapshot of the item name so the log survives item deletion
 - `CustomCategory` is campaign-scoped so different campaigns can have different category sets
 - Migration creates one "Default Campaign" and re-parents all orphaned items/carriers into it
@@ -92,7 +123,7 @@ The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below 
 **Tasks:**
 - `CampaignListView`: shows all campaigns with item counts; tap to activate; swipe to delete (with confirmation); inline "New Campaign" text field
 - App root becomes a `CampaignListView` when no campaign is selected; once selected, pushes to the loot list
-- Thread active campaign through the environment (`@EnvironmentObject` or SwiftData predicate injection)
+- Thread active campaign via `AppState` (`@Observable @MainActor` class) injected as `@Environment(AppState.self)` — never `@EnvironmentObject`
 - Update all `@Query` calls in `ContentView`, `CarriersView`, `AddLootView` etc. to filter by active campaign
 
 ---
@@ -107,7 +138,7 @@ The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below 
   - **Use**: decrement `quantity` by 1; insert `LootEvent(.used)`; if `quantity` reaches 0, delete the item
   - **Sell**: insert `LootEvent(.sold)`; delete the item
 - `EventLogView`: full list of events for the active campaign, sorted newest-first; accessible via toolbar icon on the main loot list
-- Each event row shows: icon, item name, event type, and formatted timestamp
+- Each event row shows: icon, item name, event type, and formatted timestamp using `FormatStyle` (e.g. `timestamp.formatted(date: .abbreviated, time: .shortened)`)
 
 ---
 
@@ -116,14 +147,14 @@ The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below 
 **Goal:** Players can quickly narrow the loot list to what they care about.
 
 **Tasks:**
-- Search bar at the top of the loot list (filters by item name)
+- Search bar at the top of the loot list; item name filtering must use `localizedStandardContains()`, not `contains()`
 - Quick-filter carrier chips: a horizontally scrolling row of chips below the search bar — one chip per carrier plus **All** and **Stash** (no carrier); tapping a chip filters the list
 - Filter sheet (funnel toolbar icon):
   - Category multi-select (built-in + custom)
   - Date found range (DatePicker start/end)
-  - Value range (min/max text fields)
+  - Value range (min/max); display values with `FormatStyle`, never C-style format strings
 - All active filters combine with AND logic
-- Filter state lives in the view model / view; not persisted between sessions
+- Filter state lives in an `@Observable @MainActor` view model; not persisted between sessions
 
 ---
 
@@ -145,7 +176,7 @@ The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below 
 
 **Tasks:**
 - **Quick-add bar**: a persistent bar at the bottom of the loot list (above the tab bar / safe area) with a text field and a "+" button; entering a name and tapping "+" creates an item with defaults (category: misc, quantity: 1, no carrier); item is created immediately and the bar resets
-- **Voice button**: microphone icon in the quick-add bar; taps activate `SFSpeechRecognizer` live transcription; transcribed text fills the name field; tapping again or detecting silence commits the text
+- **Voice button**: a `Button` (not `onTapGesture`) with microphone icon in the quick-add bar; taps activate `SFSpeechRecognizer` live transcription using async/await; transcribed text fills the name field; tapping again or detecting silence commits the text
 - Privacy usage description added to `Info.plist` for speech recognition
 - Full-form sheet remains available via the existing "+" toolbar button for detailed entry
 
@@ -170,9 +201,9 @@ The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below 
 **Goal:** A party can share one campaign database so all members see the same loot in real time.
 
 **Tasks:**
-- Define `SharingProvider` protocol: `share(campaign:)`, `acceptShare(metadata:)`, `isShared(campaign:) -> Bool`
-- Implement `CloudKitSharingProvider` using `SwiftData` + `NSPersistentCloudKitContainer` shared zones
-- Add a **Share Campaign** button to the campaign detail / settings; invokes the system `UICloudSharingController`
+- Define `SharingProvider` protocol with `async throws` methods: `share(campaign:)`, `acceptShare(metadata:)`, `isShared(campaign:) -> Bool`
+- Implement `CloudKitSharingProvider` using SwiftData's built-in CloudKit support (not `NSPersistentCloudKitContainer` directly)
+- Add a **Share Campaign** button to campaign settings; present the system share UI via SwiftUI — avoid `UICloudSharingController` (UIKit); if no pure SwiftUI equivalent exists at the time of implementation, wrap it in a minimal `UIViewControllerRepresentable` and flag it for future replacement
 - All party members who accept the share get full read/write (no role distinction in v1)
 - `LocalSharingProvider` (no-op) is the default for users who don't want iCloud
 - The active provider is injected via the environment so the rest of the app never imports CloudKit directly
@@ -185,8 +216,20 @@ The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below 
 
 **Tasks:**
 - Export action in the campaign settings / toolbar: generates a CSV with columns: Name, Category, Quantity, Weight, Value, Carrier, Notes, Date Added
-- Uses standard `ShareLink` / `UIActivityViewController` so users can AirDrop, save to Files, email, etc.
+- Uses SwiftUI `ShareLink` so users can AirDrop, save to Files, email, etc. — do not use `UIActivityViewController`
 - Filename: `LootList-<CampaignName>-<YYYY-MM-DD>.csv`
+
+---
+
+### Phase 10 — App Store & End-User Licensing
+
+**Goal:** Ensure the app meets App Store submission requirements and users understand the terms under which they use it.
+
+**Tasks:**
+- Draft and host a **Privacy Policy** (required by Apple for apps that collect any user data or use iCloud sharing); link it in the App Store listing and in-app under Settings
+- Draft an **End User License Agreement (EULA)**; decide whether to use Apple's standard EULA or a custom one; if custom, host it and link from Settings
+- Add a **third-party attributions** screen (Settings → Acknowledgements) listing any open source libraries used and their licenses
+- Complete App Store Connect metadata: app description, keywords, screenshots, support URL, privacy nutrition labels (Data Used to Track You, Data Linked to You, etc.)
 
 ---
 
