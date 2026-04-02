@@ -1,7 +1,7 @@
 import Foundation
 import SwiftData
 
-/// A campaign groups its own loot, carriers, custom categories, and event log.
+/// A campaign groups its own loot, carriers, and event log.
 @Model
 final class Campaign {
     var id: UUID = UUID()

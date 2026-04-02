@@ -9,7 +9,7 @@ final class LootItem {
     var weight: Double = 0
     var value: Int = 0
     var notes: String = ""
-    var dateAdded: Date = .now
+    var dateAdded = Date.now
 
     var category: LootCategory?
     var carrier: Carrier?

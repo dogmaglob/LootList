@@ -22,40 +22,7 @@ struct ContentView: View {
                             Button {
                                 selectedItem = item
                             } label: {
-                                HStack {
-                                    Text(item.category.icon)
-                                        .font(.title2)
-                                    VStack(alignment: .leading) {
-                                        Text(item.name)
-                                            .font(.headline)
-                                        HStack(spacing: 12) {
-                                            if item.weight > 0 {
-                                                Text("Wt: \(item.weight, specifier: "%g")")
-                                            }
-                                            if item.value > 0 {
-                                                Text("Val: \(item.value)")
-                                            }
-                                        }
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                        if let carrier = item.carrier {
-                                            Text(carrier.name)
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
-                                        }
-                                        if !item.notes.isEmpty {
-                                            Text(item.notes)
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
-                                        }
-                                    }
-                                    Spacer()
-                                    if item.quantity > 1 {
-                                        Text("×\(item.quantity)")
-                                            .font(.subheadline)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
+                                LootRowView(item: item)
                             }
                             .tint(.primary)
                         }
@@ -66,17 +33,15 @@ struct ContentView: View {
             .navigationTitle("D&D Loot")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button {
+                    Button("Add Loot", systemImage: "plus") {
                         showingAddSheet = true
-                    } label: {
-                        Image(systemName: "plus")
                     }
                 }
                 ToolbarItem(placement: .navigation) {
                     NavigationLink {
                         CarriersView()
                     } label: {
-                        Image(systemName: "person.2")
+                        Label("Carriers", systemImage: "person.2")
                     }
                 }
             }
@@ -96,13 +61,59 @@ struct ContentView: View {
     }
 }
 
+struct LootRowView: View {
+    let item: LootItem
+
+    var body: some View {
+        HStack {
+            Text(item.category?.emoji ?? "🎒")
+                .font(.title2)
+            VStack(alignment: .leading) {
+                Text(item.name)
+                    .font(.headline)
+                HStack(spacing: 12) {
+                    if item.weight > 0 {
+                        Text("Wt: \(item.weight.formatted(.number))")
+                    }
+                    if item.value > 0 {
+                        Text("Val: \(item.value.formatted(.number))")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                if let carrier = item.carrier {
+                    Text(carrier.name)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                if !item.notes.isEmpty {
+                    Text(item.notes)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Spacer()
+            if item.quantity > 1 {
+                Text("×\(item.quantity.formatted(.number))")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
 #Preview {
-    let container = try! ModelContainer(for: LootItem.self, Carrier.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+    let container = try! ModelContainer(
+        for: LootItem.self, Carrier.self, LootCategory.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    let category = LootCategory(name: "Weapon", emoji: "⚔️")
     let carrier = Carrier(name: "Gandalf")
+    container.mainContext.insert(category)
     container.mainContext.insert(carrier)
     let item = LootItem(
         name: "Flame Tongue Sword",
-        category: .weapon,
+        category: category,
         quantity: 2,
         weight: 3.5,
         value: 5000,
