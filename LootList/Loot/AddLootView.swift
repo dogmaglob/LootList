@@ -6,7 +6,7 @@ struct AddLootView: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var name = ""
-    @State private var category: LootCategory = .misc
+    @State private var selectedCategory: LootCategory?
     @State private var quantity = 1
     @State private var weight = ""
     @State private var value = ""
@@ -14,15 +14,17 @@ struct AddLootView: View {
     @State private var notes = ""
 
     @Query(sort: \Carrier.name) private var carriers: [Carrier]
+    @Query(sort: \LootCategory.name) private var categories: [LootCategory]
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Item Details") {
                     TextField("Item name", text: $name)
-                    Picker("Category", selection: $category) {
-                        ForEach(LootCategory.allCases) { cat in
-                            Text("\(cat.icon) \(cat.rawValue)").tag(cat)
+                    Picker("Category", selection: $selectedCategory) {
+                        Text("None").tag(nil as LootCategory?)
+                        ForEach(categories) { cat in
+                            Text("\(cat.emoji) \(cat.name)").tag(cat as LootCategory?)
                         }
                     }
                     Stepper("Quantity: \(quantity)", value: $quantity, in: 1...999)
@@ -57,7 +59,7 @@ struct AddLootView: View {
                     Button("Add") {
                         let item = LootItem(
                             name: name,
-                            category: category,
+                            category: selectedCategory,
                             quantity: quantity,
                             weight: Double(weight) ?? 0,
                             value: Int(value) ?? 0,
@@ -75,6 +77,13 @@ struct AddLootView: View {
 }
 
 #Preview {
-    AddLootView()
-        .modelContainer(for: LootItem.self, inMemory: true)
+    let container = try! ModelContainer(
+        for: LootItem.self, Carrier.self, LootCategory.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    for (name, emoji) in LootCategory.seedData {
+        container.mainContext.insert(LootCategory(name: name, emoji: emoji))
+    }
+    return AddLootView()
+        .modelContainer(container)
 }
