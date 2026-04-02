@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct claude_testApp: App {
@@ -13,5 +14,6 @@ struct claude_testApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: [LootItem.self, Carrier.self])
     }
 }
