@@ -18,12 +18,13 @@ final class LootCategory {
 extension LootCategory {
     /// Default categories inserted on first launch.
     static let seedData: [(name: String, emoji: String)] = [
-        ("Weapon", "⚔️"),
-        ("Armor",  "🛡️"),
-        ("Potion", "🧪"),
-        ("Gold",   "🪙"),
-        ("Gem",    "💎"),
-        ("Scroll", "📜"),
-        ("Misc",   "🎒"),
+        ("Weapon",  "⚔️"),
+        ("Armor",   "🛡️"),
+        ("Potion",  "🧪"),
+        ("Gold",    "🪙"),
+        ("Gem",     "💎"),
+        ("Scroll",  "📜"),
+        ("Jewelry", "💍"),
+        ("Misc",    "🎒"),
     ]
 }

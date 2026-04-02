@@ -28,7 +28,17 @@ struct LootListApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear(perform: seedCategoriesIfNeeded)
         }
         .modelContainer(container)
+    }
+
+    private func seedCategoriesIfNeeded() {
+        let context = container.mainContext
+        let count = (try? context.fetchCount(FetchDescriptor<LootCategory>())) ?? 0
+        guard count == 0 else { return }
+        for (name, emoji) in LootCategory.seedData {
+            context.insert(LootCategory(name: name, emoji: emoji))
+        }
     }
 }
