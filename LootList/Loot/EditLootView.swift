@@ -8,11 +8,12 @@ struct EditLootView: View {
     @State private var value: String
 
     @Query(sort: \Carrier.name) private var carriers: [Carrier]
+    @Query(sort: \LootCategory.name) private var categories: [LootCategory]
 
     init(item: LootItem) {
         self.item = item
-        self._weight = State(initialValue: item.weight > 0 ? "\(item.weight)" : "")
-        self._value = State(initialValue: item.value > 0 ? "\(item.value)" : "")
+        self._weight = State(initialValue: item.weight > 0 ? item.weight.formatted(.number) : "")
+        self._value = State(initialValue: item.value > 0 ? item.value.formatted(.number) : "")
     }
 
     var body: some View {
@@ -20,8 +21,9 @@ struct EditLootView: View {
             Section("Item Details") {
                 TextField("Item name", text: $item.name)
                 Picker("Category", selection: $item.category) {
-                    ForEach(LootCategory.allCases) { cat in
-                        Text("\(cat.icon) \(cat.rawValue)").tag(cat)
+                    Text("None").tag(nil as LootCategory?)
+                    ForEach(categories) { cat in
+                        Text("\(cat.emoji) \(cat.name)").tag(cat as LootCategory?)
                     }
                 }
                 Stepper("Quantity: \(item.quantity)", value: $item.quantity, in: 1...999)
@@ -55,4 +57,29 @@ struct EditLootView: View {
         .navigationTitle("Edit Loot")
         .navigationBarTitleDisplayMode(.inline)
     }
+}
+
+#Preview {
+    let container = try! ModelContainer(
+        for: LootItem.self, Carrier.self, LootCategory.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    let category = LootCategory(name: "Weapon", emoji: "⚔️")
+    let carrier = Carrier(name: "Gandalf")
+    container.mainContext.insert(category)
+    container.mainContext.insert(carrier)
+    let item = LootItem(
+        name: "Flame Tongue Sword",
+        category: category,
+        quantity: 2,
+        weight: 3.5,
+        value: 5000,
+        carrier: carrier,
+        notes: "Deals extra 2d6 fire damage"
+    )
+    container.mainContext.insert(item)
+    return NavigationStack {
+        EditLootView(item: item)
+    }
+    .modelContainer(container)
 }
