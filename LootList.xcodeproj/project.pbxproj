@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		CEF0C3D82F7F315E00D9A91F /* LootListTestPlan.xctestplan in Resources */ = {isa = PBXBuildFile; fileRef = CEF0C3D72F7F315E00D9A91F /* LootListTestPlan.xctestplan */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		CE982BFA2F773E010039A31B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		CE982BEC2F773DFF0039A31B /* LootList.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LootList.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE982BF92F773E010039A31B /* LootListTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LootListTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE982C032F773E010039A31B /* LootListUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LootListUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CEF0C3D72F7F315E00D9A91F /* LootListTestPlan.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = LootListTestPlan.xctestplan; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +80,7 @@
 		CE982BE32F773DFF0039A31B = {
 			isa = PBXGroup;
 			children = (
+				CEF0C3D72F7F315E00D9A91F /* LootListTestPlan.xctestplan */,
 				CE982BEE2F773DFF0039A31B /* LootList */,
 				CE982BFC2F773E010039A31B /* LootListTests */,
 				CE982C062F773E010039A31B /* LootListUITests */,
@@ -113,7 +119,7 @@
 			name = LootList;
 			packageProductDependencies = (
 			);
-			productName = claude_test;
+			productName = LootList;
 			productReference = CE982BEC2F773DFF0039A31B /* LootList.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -136,7 +142,7 @@
 			name = LootListTests;
 			packageProductDependencies = (
 			);
-			productName = claude_testTests;
+			productName = LoostListTests;
 			productReference = CE982BF92F773E010039A31B /* LootListTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
@@ -159,7 +165,7 @@
 			name = LootListUITests;
 			packageProductDependencies = (
 			);
-			productName = claude_testUITests;
+			productName = LootListUITests;
 			productReference = CE982C032F773E010039A31B /* LootListUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
@@ -212,6 +218,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CEF0C3D82F7F315E00D9A91F /* LootListTestPlan.xctestplan in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -472,7 +479,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LootList.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/claude_test";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LootList.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LootList";
 			};
 			name = Debug;
 		};
@@ -494,7 +501,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LootList.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/claude_test";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LootList.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LootList";
 			};
 			name = Release;
 		};

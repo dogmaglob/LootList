@@ -21,24 +21,26 @@ struct LootListApp: App {
         do {
             return try ModelContainer(for: schema)
         } catch {
-            preconditionFailure("Failed to create ModelContainer: \(error)")
+            // Migration failed — wipe the store and start fresh.
+            // This is acceptable during development; replace with a proper
+            // migration plan before shipping.
+            let storeURL = URL.applicationSupportDirectory.appending(path: "default.store")
+            for suffix in ["", "-shm", "-wal"] {
+                try? FileManager.default.removeItem(atPath: storeURL.path + suffix)
+            }
+            do {
+                return try ModelContainer(for: schema)
+            } catch {
+                preconditionFailure("Failed to create ModelContainer after store reset: \(error)")
+            }
         }
     }()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .onAppear(perform: seedCategoriesIfNeeded)
+                .onAppear { seedCategoriesIfNeeded(in: container.mainContext) }
         }
         .modelContainer(container)
-    }
-
-    private func seedCategoriesIfNeeded() {
-        let context = container.mainContext
-        let count = (try? context.fetchCount(FetchDescriptor<LootCategory>())) ?? 0
-        guard count == 0 else { return }
-        for (name, emoji) in LootCategory.seedData {
-            context.insert(LootCategory(name: name, emoji: emoji))
-        }
     }
 }

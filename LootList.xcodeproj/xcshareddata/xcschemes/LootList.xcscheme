@@ -27,8 +27,13 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES"
-      shouldAutocreateTestPlan = "YES">
+      shouldUseLaunchSchemeArgsEnv = "YES">
+      <TestPlans>
+         <TestPlanReference
+            reference = "container:LootListTestPlan.xctestplan"
+            default = "YES">
+         </TestPlanReference>
+      </TestPlans>
       <Testables>
          <TestableReference
             skipped = "NO"
@@ -82,6 +87,15 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "CE982BEB2F773DFF0039A31B"
+            BuildableName = "LootList.app"
+            BlueprintName = "LootList"
+            ReferencedContainer = "container:LootList.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

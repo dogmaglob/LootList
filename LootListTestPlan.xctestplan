@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "84F91693-07D6-4D77-8630-F06ECFB9D45E",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:LootList.xcodeproj",
+        "identifier" : "CE982BF82F773E010039A31B",
+        "name" : "LootListTests"
+      }
+    }
+  ],
+  "version" : 1
+}
