@@ -104,7 +104,7 @@ The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below 
 - Update `LootItem`: remove `LootCategory` enum reference; `category: LootCategory?`; all properties get default values; `campaign` relationship made optional; remove any `@Attribute(.unique)` usage
 - Update `Carrier`: `campaign` relationship made optional; remove `@Attribute(.unique)` from `name`
 - Create `AppState` as an `@Observable @MainActor` class holding `activeCampaign: Campaign?`; inject into the environment via `@State` in `LootListApp`
-- Implement versioned SwiftData schema migration from v1 (current) → v2 (with Campaign); existing items/carriers land in an auto-created "Default Campaign"
+- ~~Implement versioned SwiftData schema migration from v1 → v2~~ — skipped; app not yet released so no real user data to preserve
 
 **Key decisions:**
 - All SwiftData model properties have defaults/are optional from the start — CloudKit requires this and it avoids a second migration later
@@ -114,7 +114,7 @@ The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below 
 - `LootCategory` is a SwiftData model (not an enum); the seven built-ins are seeded data, not hardcoded cases — making categories fully customizable
 - Custom categories are app-wide, not campaign-scoped; variance between campaigns is expected to be low (future metrics will validate this)
 - `AppState` is an `@Observable @MainActor` class holding `activeCampaign`; it is the single source of truth for which campaign is active, allowing every view to scope its queries without passing the campaign down through the view hierarchy
-- Migration creates one "Default Campaign" and re-parents all orphaned items/carriers into it
+- Migration skipped pre-release; the store-wipe fallback in `LootListApp` handles schema changes during development
 
 ---
 
