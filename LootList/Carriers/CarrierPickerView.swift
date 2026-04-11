@@ -44,7 +44,7 @@ struct CarrierPickerView: View {
                         dismiss()
                     } label: {
                         HStack {
-                            Text(carrier.name)
+                            Text(carrier.name ?? "")
                                 .foregroundStyle(.primary)
                             Spacer()
                             if selection == carrier {

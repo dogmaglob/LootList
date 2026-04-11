@@ -82,7 +82,7 @@ struct LootRowView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 if let carrier = item.carrier {
-                    Text(carrier.name)
+                    Text(carrier.name ?? "")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

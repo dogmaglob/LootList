@@ -8,11 +8,10 @@ final class Campaign {
     var name: String = ""
     var createdAt = Date.now
 
-    // Inverses for loot and carriers are specified on the child side in Task 3.
-    @Relationship(deleteRule: .cascade)
+    @Relationship(deleteRule: .cascade, inverse: \LootItem.campaign)
     var loot: [LootItem]? = []
 
-    @Relationship(deleteRule: .cascade)
+    @Relationship(deleteRule: .cascade, inverse: \Carrier.campaign)
     var carriers: [Carrier]? = []
 
     @Relationship(deleteRule: .cascade, inverse: \LootEvent.campaign)

@@ -13,6 +13,7 @@ final class LootItem {
 
     var category: LootCategory?
     var carrier: Carrier?
+    var campaign: Campaign?
 
     init(
         name: String = "",

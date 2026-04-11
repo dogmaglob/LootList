@@ -27,9 +27,9 @@ struct CarriersView: View {
                 } else {
                     ForEach(carriers) { carrier in
                         HStack {
-                            Text(carrier.name)
+                            Text(carrier.name ?? "")
                             Spacer()
-                            Text("\(carrier.loot.count) items")
+                            Text("\((carrier.loot?.count ?? 0).formatted(.number)) items")
                                 .foregroundStyle(.secondary)
                         }
                     }

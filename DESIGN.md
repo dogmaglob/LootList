@@ -35,7 +35,7 @@
 
 ### Carriers / Party
 
-- **Carrier data** — Name only.
+- **Carrier data** — Name only. Carrier names must be unique within a campaign; enforced in the UI at point of entry (not via `@Attribute(.unique)`, which is incompatible with CloudKit).
 - **Uncarried items** — Items with no carrier assigned are implicitly the party stash. No special container needed.
 - **Carrier filtering** — Filter by carrier from the main list in one or two taps (quick-filter chips/buttons). No dedicated carrier detail screen.
 

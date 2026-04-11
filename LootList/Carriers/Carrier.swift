@@ -3,11 +3,15 @@ import SwiftData
 
 @Model
 final class Carrier {
-    @Attribute(.unique) var name: String
-    @Relationship(deleteRule: .nullify, inverse: \LootItem.carrier) var loot: [LootItem]
+    var id: UUID = UUID()
+    var name: String?
+
+    @Relationship(deleteRule: .nullify, inverse: \LootItem.carrier)
+    var loot: [LootItem]? = []
+
+    var campaign: Campaign?
 
     init(name: String) {
         self.name = name
-        self.loot = []
     }
 }
