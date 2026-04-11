@@ -108,10 +108,12 @@ The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below 
 
 **Key decisions:**
 - All SwiftData model properties have defaults/are optional from the start — CloudKit requires this and it avoids a second migration later
-- `@Attribute(.unique)` removed from `Carrier.name` for the same CloudKit reason
+- `@Attribute(.unique)` removed from `Carrier.name` for the same CloudKit reason; uniqueness is enforced in the UI instead
+- `Carrier.name` is `String?` rather than `String = ""` — an empty string default would allow nameless carriers; optional correctly models "not yet set" and forces the UI to always supply a real name
 - `LootEvent` stores a String snapshot of the item name so the log survives item deletion
 - `LootCategory` is a SwiftData model (not an enum); the seven built-ins are seeded data, not hardcoded cases — making categories fully customizable
 - Custom categories are app-wide, not campaign-scoped; variance between campaigns is expected to be low (future metrics will validate this)
+- `AppState` is an `@Observable @MainActor` class holding `activeCampaign`; it is the single source of truth for which campaign is active, allowing every view to scope its queries without passing the campaign down through the view hierarchy
 - Migration creates one "Default Campaign" and re-parents all orphaned items/carriers into it
 
 ---

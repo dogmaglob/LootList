@@ -10,6 +10,8 @@ import SwiftData
 
 @main
 struct LootListApp: App {
+    @State private var appState = AppState()
+
     let container: ModelContainer = {
         let schema = Schema([
             LootItem.self,
@@ -39,6 +41,7 @@ struct LootListApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(appState)
                 .onAppear { seedCategoriesIfNeeded(in: container.mainContext) }
         }
         .modelContainer(container)
