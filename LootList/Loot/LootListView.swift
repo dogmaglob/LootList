@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-struct ContentView: View {
+struct LootListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var loot: [LootItem]
     @State private var showingAddSheet = false
@@ -133,6 +133,6 @@ struct LootRowView: View {
         notes: "Deals extra 2d6 fire damage"
     )
     container.mainContext.insert(item)
-    return ContentView(campaign: nil)
+    return LootListView(campaign: nil)
         .modelContainer(container)
 }

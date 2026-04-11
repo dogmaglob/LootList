@@ -43,7 +43,7 @@ struct CampaignListView: View {
             }
             .navigationTitle("Campaigns")
             .navigationDestination(for: Campaign.self) { campaign in
-                ContentView(campaign: campaign)
+                LootListView(campaign: campaign)
                     .onAppear { appState.activeCampaign = campaign }
             }
             .alert(
