@@ -5,6 +5,8 @@ struct AddLootView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
+    private let campaign: Campaign?
+
     @State private var name = ""
     @State private var selectedCategory: LootCategory?
     @State private var quantity = 1
@@ -15,6 +17,10 @@ struct AddLootView: View {
 
     @Query(sort: \Carrier.name) private var carriers: [Carrier]
     @Query(sort: \LootCategory.name) private var categories: [LootCategory]
+
+    init(campaign: Campaign?) {
+        self.campaign = campaign
+    }
 
     var body: some View {
         NavigationStack {
@@ -66,6 +72,7 @@ struct AddLootView: View {
                             carrier: selectedCarrier,
                             notes: notes
                         )
+                        item.campaign = campaign
                         modelContext.insert(item)
                         dismiss()
                     }
@@ -84,6 +91,6 @@ struct AddLootView: View {
     for (name, emoji) in LootCategory.seedData {
         container.mainContext.insert(LootCategory(name: name, emoji: emoji))
     }
-    return AddLootView()
+    return AddLootView(campaign: nil)
         .modelContainer(container)
 }

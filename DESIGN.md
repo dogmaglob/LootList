@@ -128,6 +128,11 @@ The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below 
 - Thread active campaign via `AppState` (`@Observable @MainActor` class) injected as `@Environment(AppState.self)` — never `@EnvironmentObject`
 - Update all `@Query` calls in `ContentView`, `CarriersView`, `AddLootView` etc. to filter by active campaign
 
+**Key decisions:**
+- `CampaignListView` is always the root; navigation to the loot list is push-based via `NavigationLink(value:)` and `navigationDestination(for: Campaign.self)` — this gives a natural back button and keeps the navigation stack clean
+- `appState.activeCampaign` is set in `.onAppear` of `ContentView` when a campaign is pushed — simple and sufficient; no need for a separate selection mechanism
+- Delete uses a confirmation alert with a proper mutable `Binding<Bool>` rather than `.constant()`, so SwiftUI can dismiss the alert correctly
+
 ---
 
 ### Phase 3 — Consumable Use, Sell & Item Event Log
@@ -258,3 +263,5 @@ Everything listed under **Future Features** below.
 - Join code / link-based party sharing
 - Website launch page.  Includes link to say you are interested in Android/Web/Windows version.
 - Category usage metrics: track which categories are used across campaigns to validate whether category sets vary significantly between campaigns. Hypothesis: variance is low, justifying the app-wide category design.
+- Deleted campaigns recovery: soft-delete campaigns instead of permanently removing them; a "Recently Deleted" view (accessible from `CampaignListView`) lets users restore a deleted campaign along with all its loot, carriers, and events.
+- Loot notifications: push/local notifications when loot is added to or moved between carriers. User-configurable filters: notify only for items assigned to your carrier, only for items matching certain categories (e.g. magical items), or custom filter combinations.

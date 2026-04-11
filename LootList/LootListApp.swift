@@ -40,7 +40,7 @@ struct LootListApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            CampaignListView()
                 .environment(appState)
                 .onAppear { seedCategoriesIfNeeded(in: container.mainContext) }
         }

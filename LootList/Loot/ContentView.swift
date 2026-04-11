@@ -3,54 +3,66 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \LootItem.dateAdded, order: .reverse) private var loot: [LootItem]
+    @Query private var loot: [LootItem]
     @State private var showingAddSheet = false
     @State private var selectedItem: LootItem?
 
+    private let campaign: Campaign?
+
+    init(campaign: Campaign?) {
+        self.campaign = campaign
+        let campaignID = campaign?.id
+        _loot = Query(
+            filter: #Predicate<LootItem> { item in
+                item.campaign?.id == campaignID
+            },
+            sort: \LootItem.dateAdded,
+            order: .reverse
+        )
+    }
+
     var body: some View {
-        NavigationStack {
-            Group {
-                if loot.isEmpty {
-                    ContentUnavailableView(
-                        "No Loot Yet",
-                        systemImage: "bag",
-                        description: Text("Tap + to add loot from your adventure.")
-                    )
-                } else {
-                    List {
-                        ForEach(loot) { item in
-                            Button {
-                                selectedItem = item
-                            } label: {
-                                LootRowView(item: item)
-                            }
-                            .tint(.primary)
+        Group {
+            if loot.isEmpty {
+                ContentUnavailableView(
+                    "No Loot Yet",
+                    systemImage: "bag",
+                    description: Text("Tap + to add loot from your adventure.")
+                )
+            } else {
+                List {
+                    ForEach(loot) { item in
+                        Button {
+                            selectedItem = item
+                        } label: {
+                            LootRowView(item: item)
                         }
-                        .onDelete(perform: deleteLoot)
+                        .tint(.primary)
                     }
+                    .onDelete(perform: deleteLoot)
                 }
             }
-            .navigationTitle("D&D Loot")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button("Add Loot", systemImage: "plus") {
-                        showingAddSheet = true
-                    }
-                }
-                ToolbarItem(placement: .navigation) {
-                    NavigationLink {
-                        CarriersView()
-                    } label: {
-                        Label("Carriers", systemImage: "person.2")
-                    }
+        }
+        .navigationTitle("D&D Loot")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Add Loot", systemImage: "plus") {
+                    showingAddSheet = true
                 }
             }
-            .navigationDestination(item: $selectedItem) { item in
-                EditLootView(item: item)
+            ToolbarItem(placement: .navigation) {
+                NavigationLink {
+                    CarriersView()
+                } label: {
+                    Label("Carriers", systemImage: "person.2")
+                }
             }
-            .sheet(isPresented: $showingAddSheet) {
-                AddLootView()
-            }
+        }
+        .navigationDestination(item: $selectedItem) { item in
+            EditLootView(item: item)
+        }
+        .sheet(isPresented: $showingAddSheet) {
+            AddLootView(campaign: campaign)
         }
     }
 
@@ -121,6 +133,6 @@ struct LootRowView: View {
         notes: "Deals extra 2d6 fire damage"
     )
     container.mainContext.insert(item)
-    return ContentView()
+    return ContentView(campaign: nil)
         .modelContainer(container)
 }
