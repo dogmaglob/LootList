@@ -2,14 +2,17 @@ import SwiftUI
 import SwiftData
 
 struct CarriersView: View {
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Query private var carriers: [Carrier]
     @State private var newName = ""
 
     private let campaign: Campaign?
+    private let selection: Binding<Carrier?>?
 
-    init(campaign: Campaign?) {
+    init(campaign: Campaign?, selection: Binding<Carrier?>? = nil) {
         self.campaign = campaign
+        self.selection = selection
         let campaignID = campaign?.id
         _carriers = Query(
             filter: #Predicate<Carrier> { carrier in
@@ -41,28 +44,67 @@ struct CarriersView: View {
             }
 
             Section {
-                if carriers.isEmpty {
-                    Text("No carriers yet")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(carriers) { carrier in
+                if let selection {
+                    Button {
+                        selection.wrappedValue = nil
+                        dismiss()
+                    } label: {
                         HStack {
-                            Text(carrier.name ?? "")
+                            Text("None")
+                                .foregroundStyle(.primary)
                             Spacer()
-                            Text("\((carrier.loot?.count ?? 0).formatted(.number)) items")
-                                .foregroundStyle(.secondary)
+                            if selection.wrappedValue == nil {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(.tint)
+                            }
+                        }
+                    }
+
+                    ForEach(carriers) { carrier in
+                        Button {
+                            selection.wrappedValue = carrier
+                            dismiss()
+                        } label: {
+                            HStack {
+                                Text(carrier.name ?? "")
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                if selection.wrappedValue == carrier {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(.tint)
+                                }
+                            }
                         }
                     }
                     .onDelete(perform: deleteCarriers)
+                } else {
+                    if carriers.isEmpty {
+                        Text("No carriers yet")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(carriers) { carrier in
+                            HStack {
+                                Text(carrier.name ?? "")
+                                Spacer()
+                                Text("\((carrier.loot?.count ?? 0).formatted(.number)) items")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .onDelete(perform: deleteCarriers)
+                    }
                 }
             }
         }
-        .navigationTitle("Carriers")
+        .navigationTitle(selection != nil ? "Carrier" : "Carriers")
     }
 
     private func deleteCarriers(at offsets: IndexSet) {
         for index in offsets {
-            modelContext.delete(carriers[index])
+            let carrier = carriers[index]
+            if selection?.wrappedValue == carrier {
+                selection?.wrappedValue = nil
+            }
+            modelContext.delete(carrier)
         }
     }
 }

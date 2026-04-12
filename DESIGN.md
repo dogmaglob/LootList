@@ -132,6 +132,7 @@ The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below 
 - `CampaignListView` is always the root; navigation to the loot list is push-based via `NavigationLink(value:)` and `navigationDestination(for: Campaign.self)` — this gives a natural back button and keeps the navigation stack clean
 - `appState.activeCampaign` is set in `.onAppear` of `ContentView` when a campaign is pushed — simple and sufficient; no need for a separate selection mechanism
 - Delete uses a confirmation alert with a proper mutable `Binding<Bool>` rather than `.constant()`, so SwiftUI can dismiss the alert correctly
+- `EditLootView` uses the draft-state pattern: all fields are copied to local `@State` in `init` and written back to the SwiftData model in `.onDisappear`. Using `@Bindable` directly caused an observation loop — every keystroke mutated the model, triggering `LootListView`'s `@Query` to re-fetch, which re-rendered the parent and repeatedly recreated the destination view. **Trade-off:** if the app is force-quit while `EditLootView` is open, unsaved edits are lost. Revisit if we add autosave, scene-phase save, or explicit Save/Cancel buttons.
 
 ---
 

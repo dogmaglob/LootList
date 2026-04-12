@@ -59,7 +59,7 @@ struct LootListView: View {
             }
         }
         .navigationDestination(item: $selectedItem) { item in
-            EditLootView(item: item)
+            EditLootView(item: item, campaign: campaign)
         }
         .sheet(isPresented: $showingAddSheet) {
             AddLootView(campaign: campaign)
