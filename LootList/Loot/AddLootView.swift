@@ -39,7 +39,7 @@ struct AddLootView: View {
                     TextField("Value", text: $value)
                         .keyboardType(.numberPad)
                     NavigationLink {
-                        CarrierPickerView(selection: $selectedCarrier)
+                        CarrierPickerView(campaign: campaign, selection: $selectedCarrier)
                     } label: {
                         HStack {
                             Text("Carrier")

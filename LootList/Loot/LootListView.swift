@@ -52,7 +52,7 @@ struct LootListView: View {
             }
             ToolbarItem(placement: .navigation) {
                 NavigationLink {
-                    CarriersView()
+                    CarriersView(campaign: campaign)
                 } label: {
                     Label("Carriers", systemImage: "person.2")
                 }

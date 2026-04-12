@@ -7,13 +7,20 @@ struct EditLootView: View {
     @State private var weight: String
     @State private var value: String
 
-    @Query(sort: \Carrier.name) private var carriers: [Carrier]
+    @Query private var carriers: [Carrier]
     @Query(sort: \LootCategory.name) private var categories: [LootCategory]
 
     init(item: LootItem) {
         self.item = item
         self._weight = State(initialValue: item.weight > 0 ? item.weight.formatted(.number) : "")
         self._value = State(initialValue: item.value > 0 ? item.value.formatted(.number) : "")
+        let campaignID = item.campaign?.id
+        _carriers = Query(
+            filter: #Predicate<Carrier> { carrier in
+                carrier.campaign?.id == campaignID
+            },
+            sort: \Carrier.name
+        )
     }
 
     var body: some View {
@@ -38,7 +45,7 @@ struct EditLootView: View {
                         item.value = Int(newValue) ?? 0
                     }
                 NavigationLink {
-                    CarrierPickerView(selection: $item.carrier)
+                    CarrierPickerView(campaign: item.campaign, selection: $item.carrier)
                 } label: {
                     HStack {
                         Text("Carrier")
