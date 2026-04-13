@@ -69,6 +69,13 @@ struct LootListView: View {
                     Label("Carriers", systemImage: "person.2")
                 }
             }
+            ToolbarItem(placement: .navigation) {
+                NavigationLink {
+                    EventLogView(campaign: campaign)
+                } label: {
+                    Label("Event Log", systemImage: "scroll")
+                }
+            }
         }
         .navigationDestination(item: $selectedItem) { item in
             EditLootView(item: item, campaign: campaign)
