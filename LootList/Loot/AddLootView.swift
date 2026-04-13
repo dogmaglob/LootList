@@ -74,6 +74,8 @@ struct AddLootView: View {
                         )
                         item.campaign = campaign
                         modelContext.insert(item)
+                        let event = LootEvent(type: .found, itemName: name, campaign: campaign)
+                        modelContext.insert(event)
                         dismiss()
                     }
                     .disabled(name.isEmpty)

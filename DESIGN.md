@@ -147,6 +147,7 @@ The existing codebase is a minimal SwiftUI + SwiftData skeleton. All work below 
   - **Sell**: insert `LootEvent(.sold)`; delete the item
 - `EventLogView`: full list of events for the active campaign, sorted newest-first; accessible via toolbar icon on the main loot list
 - Each event row shows: icon, item name, event type, and formatted timestamp using `FormatStyle` (e.g. `timestamp.formatted(date: .abbreviated, time: .shortened)`)
+- **Undo for Use and Sell**: register undo actions via `UndoManager` (accessed via `@Environment(\.undoManager)`) so the user can shake to undo or use the system undo gesture; for **Sell** undo, re-insert the item and delete the event; for **Use** undo, increment quantity back (or re-insert if item was deleted at quantity 0) and delete the event
 
 ---
 
