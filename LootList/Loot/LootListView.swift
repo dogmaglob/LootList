@@ -38,8 +38,20 @@ struct LootListView: View {
                             LootRowView(item: item)
                         }
                         .tint(.primary)
+                        .swipeActions(edge: .trailing) {
+                            Button("Delete", systemImage: "trash", role: .destructive) {
+                                modelContext.delete(item)
+                            }
+                            Button("Sell", systemImage: "tag") {
+                                perform(.sold, on: item)
+                            }
+                            .tint(.green)
+                            Button("Use", systemImage: "checkmark") {
+                                perform(.used, on: item)
+                            }
+                            .tint(.blue)
+                        }
                     }
-                    .onDelete(perform: deleteLoot)
                 }
             }
         }
@@ -66,9 +78,12 @@ struct LootListView: View {
         }
     }
 
-    private func deleteLoot(at offsets: IndexSet) {
-        for index in offsets {
-            modelContext.delete(loot[index])
+    private func perform(_ eventType: LootEventType, on item: LootItem) {
+        let event = LootEvent(type: eventType, itemName: item.name, campaign: campaign)
+        modelContext.insert(event)
+        item.quantity -= 1
+        if item.quantity <= 0 {
+            modelContext.delete(item)
         }
     }
 }

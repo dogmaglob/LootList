@@ -52,4 +52,65 @@ struct LootEventTests {
         let events = try context.fetch(FetchDescriptor<LootEvent>())
         #expect(events[0].campaign?.name == "Adventure")
     }
+
+    // MARK: - Use / Sell logic
+
+    @Test func useDecrementsQuantity() throws {
+        let context = try makeContext()
+        let item = LootItem(name: "Potion", quantity: 3)
+        context.insert(item)
+
+        item.quantity -= 1
+        let event = LootEvent(type: .used, itemName: item.name, campaign: nil)
+        context.insert(event)
+
+        #expect(item.quantity == 2)
+        let events = try context.fetch(FetchDescriptor<LootEvent>())
+        #expect(events[0].type == .used)
+    }
+
+    @Test func sellDecrementsQuantity() throws {
+        let context = try makeContext()
+        let item = LootItem(name: "Gem", quantity: 2)
+        context.insert(item)
+
+        item.quantity -= 1
+        let event = LootEvent(type: .sold, itemName: item.name, campaign: nil)
+        context.insert(event)
+
+        #expect(item.quantity == 1)
+        let events = try context.fetch(FetchDescriptor<LootEvent>())
+        #expect(events[0].type == .sold)
+    }
+
+    @Test func itemDeletedWhenQuantityReachesZero() throws {
+        let context = try makeContext()
+        let item = LootItem(name: "Arrow", quantity: 1)
+        context.insert(item)
+
+        item.quantity -= 1
+        let event = LootEvent(type: .used, itemName: item.name, campaign: nil)
+        context.insert(event)
+        if item.quantity <= 0 { context.delete(item) }
+
+        let items = try context.fetch(FetchDescriptor<LootItem>())
+        #expect(items.isEmpty)
+        let events = try context.fetch(FetchDescriptor<LootEvent>())
+        #expect(events.count == 1)
+    }
+
+    @Test func itemNotDeletedWhenQuantityAboveZero() throws {
+        let context = try makeContext()
+        let item = LootItem(name: "Arrow", quantity: 5)
+        context.insert(item)
+
+        item.quantity -= 1
+        let event = LootEvent(type: .used, itemName: item.name, campaign: nil)
+        context.insert(event)
+        if item.quantity <= 0 { context.delete(item) }
+
+        let items = try context.fetch(FetchDescriptor<LootItem>())
+        #expect(items.count == 1)
+        #expect(items[0].quantity == 4)
+    }
 }
