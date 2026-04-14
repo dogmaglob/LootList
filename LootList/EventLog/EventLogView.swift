@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct EventLogView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query private var events: [LootEvent]
 
     init(campaign: Campaign?) {
@@ -27,6 +28,12 @@ struct EventLogView: View {
                 List {
                     ForEach(events) { event in
                         LootEventRowView(event: event)
+                            .swipeActions(edge: .trailing) {
+                                Button("Undo", systemImage: "arrow.uturn.backward") {
+                                    event.undo(in: modelContext)
+                                }
+                                .tint(.orange)
+                            }
                     }
                 }
             }

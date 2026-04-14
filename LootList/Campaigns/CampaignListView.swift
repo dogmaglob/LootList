@@ -79,7 +79,7 @@ struct CampaignRowView: View {
         VStack(alignment: .leading) {
             Text(campaign.name)
                 .font(.headline)
-            Text("\((campaign.loot?.count ?? 0).formatted(.number)) items")
+            Text("\((campaign.loot?.filter { !$0.isDeleted && $0.quantity > 0 }.count ?? 0).formatted(.number)) items")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

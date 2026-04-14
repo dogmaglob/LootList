@@ -74,7 +74,7 @@ struct AddLootView: View {
                         )
                         item.campaign = campaign
                         modelContext.insert(item)
-                        let event = LootEvent(type: .found, itemName: name, campaign: campaign)
+                        let event = LootEvent(type: .found, itemName: name, itemID: item.id, campaign: campaign)
                         modelContext.insert(event)
                         dismiss()
                     }

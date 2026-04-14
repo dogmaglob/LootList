@@ -11,31 +11,32 @@ struct LootEventTests {
         return ModelContext(container)
     }
 
+    // MARK: - Found event
+
     @Test func foundEventInsertedWithItem() throws {
         let context = try makeContext()
         let campaign = Campaign(name: "Test Campaign")
         context.insert(campaign)
-
         let item = LootItem(name: "Sword of Testing")
         item.campaign = campaign
         context.insert(item)
-        let event = LootEvent(type: .found, itemName: item.name, campaign: campaign)
+        let event = LootEvent(type: .found, itemName: item.name, itemID: item.id, campaign: campaign)
         context.insert(event)
 
         let events = try context.fetch(FetchDescriptor<LootEvent>())
         #expect(events.count == 1)
         #expect(events[0].type == .found)
         #expect(events[0].itemName == "Sword of Testing")
+        #expect(events[0].itemID == item.id)
     }
 
     @Test func foundEventCapturesNameSnapshot() throws {
         let context = try makeContext()
         let item = LootItem(name: "Original Name")
         context.insert(item)
-        let event = LootEvent(type: .found, itemName: item.name, campaign: nil)
+        let event = LootEvent(type: .found, itemName: item.name, itemID: item.id, campaign: nil)
         context.insert(event)
 
-        // Mutate the item name — the event snapshot must not change
         item.name = "Renamed Item"
 
         let events = try context.fetch(FetchDescriptor<LootEvent>())
@@ -46,7 +47,9 @@ struct LootEventTests {
         let context = try makeContext()
         let campaign = Campaign(name: "Adventure")
         context.insert(campaign)
-        let event = LootEvent(type: .found, itemName: "Potion", campaign: campaign)
+        let item = LootItem(name: "Potion")
+        context.insert(item)
+        let event = LootEvent(type: .found, itemName: item.name, itemID: item.id, campaign: campaign)
         context.insert(event)
 
         let events = try context.fetch(FetchDescriptor<LootEvent>())
@@ -61,8 +64,7 @@ struct LootEventTests {
         context.insert(item)
 
         item.quantity -= 1
-        let event = LootEvent(type: .used, itemName: item.name, campaign: nil)
-        context.insert(event)
+        context.insert(LootEvent(type: .used, itemName: item.name, itemID: item.id, campaign: nil))
 
         #expect(item.quantity == 2)
         let events = try context.fetch(FetchDescriptor<LootEvent>())
@@ -75,42 +77,99 @@ struct LootEventTests {
         context.insert(item)
 
         item.quantity -= 1
-        let event = LootEvent(type: .sold, itemName: item.name, campaign: nil)
-        context.insert(event)
+        context.insert(LootEvent(type: .sold, itemName: item.name, itemID: item.id, campaign: nil))
 
         #expect(item.quantity == 1)
         let events = try context.fetch(FetchDescriptor<LootEvent>())
         #expect(events[0].type == .sold)
     }
 
-    @Test func itemDeletedWhenQuantityReachesZero() throws {
+    @Test func itemHiddenNotDeletedWhenQuantityReachesZero() throws {
         let context = try makeContext()
         let item = LootItem(name: "Arrow", quantity: 1)
         context.insert(item)
 
         item.quantity -= 1
-        let event = LootEvent(type: .used, itemName: item.name, campaign: nil)
-        context.insert(event)
-        if item.quantity <= 0 { context.delete(item) }
+        context.insert(LootEvent(type: .used, itemName: item.name, itemID: item.id, campaign: nil))
 
         let items = try context.fetch(FetchDescriptor<LootItem>())
-        #expect(items.isEmpty)
-        let events = try context.fetch(FetchDescriptor<LootEvent>())
-        #expect(events.count == 1)
+        #expect(items.count == 1)
+        #expect(items[0].quantity == 0)
+        #expect(items[0].isDeleted == false)
     }
 
-    @Test func itemNotDeletedWhenQuantityAboveZero() throws {
+    @Test func itemNotHiddenWhenQuantityAboveZero() throws {
         let context = try makeContext()
         let item = LootItem(name: "Arrow", quantity: 5)
         context.insert(item)
 
         item.quantity -= 1
-        let event = LootEvent(type: .used, itemName: item.name, campaign: nil)
-        context.insert(event)
-        if item.quantity <= 0 { context.delete(item) }
+        context.insert(LootEvent(type: .used, itemName: item.name, itemID: item.id, campaign: nil))
 
         let items = try context.fetch(FetchDescriptor<LootItem>())
         #expect(items.count == 1)
         #expect(items[0].quantity == 4)
+    }
+
+    // MARK: - Undo
+
+    @Test func undoFoundSoftDeletesItem() throws {
+        let context = try makeContext()
+        let item = LootItem(name: "Sword")
+        context.insert(item)
+        let event = LootEvent(type: .found, itemName: item.name, itemID: item.id, campaign: nil)
+        context.insert(event)
+
+        event.undo(in: context)
+
+        let items = try context.fetch(FetchDescriptor<LootItem>())
+        #expect(items.count == 1)
+        #expect(items[0].isDeleted == true)
+        #expect(try context.fetch(FetchDescriptor<LootEvent>()).isEmpty)
+    }
+
+    @Test func undoUsedIncrementsQuantity() throws {
+        let context = try makeContext()
+        let item = LootItem(name: "Potion", quantity: 3)
+        context.insert(item)
+        let event = LootEvent(type: .used, itemName: item.name, itemID: item.id, campaign: nil)
+        context.insert(event)
+        item.quantity -= 1
+
+        event.undo(in: context)
+
+        let items = try context.fetch(FetchDescriptor<LootItem>())
+        #expect(items[0].quantity == 3)
+        #expect(try context.fetch(FetchDescriptor<LootEvent>()).isEmpty)
+    }
+
+    @Test func undoUsedRestoresZeroQuantityItem() throws {
+        let context = try makeContext()
+        let item = LootItem(name: "Last Arrow", quantity: 1)
+        context.insert(item)
+        let event = LootEvent(type: .used, itemName: item.name, itemID: item.id, campaign: nil)
+        context.insert(event)
+        item.quantity -= 1
+
+        event.undo(in: context)
+
+        let items = try context.fetch(FetchDescriptor<LootItem>())
+        #expect(items[0].quantity == 1)
+        #expect(try context.fetch(FetchDescriptor<LootEvent>()).isEmpty)
+    }
+
+    @Test func undoDeletedClearsFlag() throws {
+        let context = try makeContext()
+        let item = LootItem(name: "Shield")
+        context.insert(item)
+        let event = LootEvent(type: .deleted, itemName: item.name, itemID: item.id, campaign: nil)
+        context.insert(event)
+        item.isDeleted = true
+
+        event.undo(in: context)
+
+        let items = try context.fetch(FetchDescriptor<LootItem>())
+        #expect(items[0].isDeleted == false)
+        #expect(try context.fetch(FetchDescriptor<LootEvent>()).isEmpty)
     }
 }

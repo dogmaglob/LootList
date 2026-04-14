@@ -11,6 +11,9 @@ final class LootItem {
     var notes: String = ""
     var dateAdded = Date.now
 
+    /// Soft-delete flag. Hidden from the loot list when `true`; restored by undoing a delete event.
+    var isDeleted: Bool = false
+
     var category: LootCategory?
     var carrier: Carrier?
     var campaign: Campaign?

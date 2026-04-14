@@ -6,6 +6,7 @@ extension LootEventType {
         case .found: "Found"
         case .sold: "Sold"
         case .used: "Used"
+        case .deleted: "Deleted"
         }
     }
 
@@ -14,6 +15,7 @@ extension LootEventType {
         case .found: "plus.circle.fill"
         case .sold: "tag.fill"
         case .used: "checkmark.circle.fill"
+        case .deleted: "trash.fill"
         }
     }
 
@@ -22,6 +24,7 @@ extension LootEventType {
         case .found: .green
         case .sold: .orange
         case .used: .blue
+        case .deleted: .red
         }
     }
 }

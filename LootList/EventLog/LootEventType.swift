@@ -5,4 +5,5 @@ enum LootEventType: String, Codable, CaseIterable {
     case found
     case sold
     case used
+    case deleted
 }

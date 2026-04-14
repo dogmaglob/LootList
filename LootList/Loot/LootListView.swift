@@ -14,7 +14,9 @@ struct LootListView: View {
         let campaignID = campaign?.id
         _loot = Query(
             filter: #Predicate<LootItem> { item in
-                item.campaign?.id == campaignID
+                item.campaign?.id == campaignID &&
+                item.isDeleted == false &&
+                item.quantity > 0
             },
             sort: \LootItem.dateAdded,
             order: .reverse
@@ -40,7 +42,9 @@ struct LootListView: View {
                         .tint(.primary)
                         .swipeActions(edge: .trailing) {
                             Button("Delete", systemImage: "trash", role: .destructive) {
-                                modelContext.delete(item)
+                                let event = LootEvent(type: .deleted, itemName: item.name, itemID: item.id, campaign: campaign)
+                                modelContext.insert(event)
+                                item.isDeleted = true
                             }
                             Button("Sell", systemImage: "tag") {
                                 perform(.sold, on: item)
@@ -86,12 +90,9 @@ struct LootListView: View {
     }
 
     private func perform(_ eventType: LootEventType, on item: LootItem) {
-        let event = LootEvent(type: eventType, itemName: item.name, campaign: campaign)
+        let event = LootEvent(type: eventType, itemName: item.name, itemID: item.id, campaign: campaign)
         modelContext.insert(event)
         item.quantity -= 1
-        if item.quantity <= 0 {
-            modelContext.delete(item)
-        }
     }
 }
 
