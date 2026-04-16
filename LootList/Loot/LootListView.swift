@@ -4,9 +4,11 @@ import SwiftData
 struct LootListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var loot: [LootItem]
+    @Query private var carriers: [Carrier]
     @State private var showingAddSheet = false
     @State private var selectedItem: LootItem?
     @State private var searchText = ""
+    @State private var carrierFilter: CarrierFilter = .all
 
     private let campaign: Campaign?
 
@@ -22,11 +24,26 @@ struct LootListView: View {
             sort: \LootItem.dateAdded,
             order: .reverse
         )
+        _carriers = Query(
+            filter: #Predicate<Carrier> { $0.campaign?.id == campaignID },
+            sort: \Carrier.name
+        )
     }
 
     private var filteredLoot: [LootItem] {
-        guard !searchText.isEmpty else { return loot }
-        return loot.filter { $0.name.localizedStandardContains(searchText) }
+        var result = loot
+        if !searchText.isEmpty {
+            result = result.filter { $0.name.localizedStandardContains(searchText) }
+        }
+        switch carrierFilter {
+        case .all:
+            break
+        case .stash:
+            result = result.filter { $0.carrier == nil }
+        case .specific(let carrier):
+            result = result.filter { $0.carrier?.id == carrier.id }
+        }
+        return result
     }
 
     var body: some View {
@@ -37,11 +54,42 @@ struct LootListView: View {
                     systemImage: "bag",
                     description: Text("Tap + to add loot from your adventure.")
                 )
-            } else if filteredLoot.isEmpty {
-                ContentUnavailableView.search(text: searchText)
             } else {
-                List {
-                    ForEach(filteredLoot) { item in
+                VStack(spacing: 0) {
+                    if !carriers.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                FilterChip("All", isSelected: carrierFilter == .all) {
+                                    carrierFilter = .all
+                                }
+                                FilterChip("Stash", isSelected: carrierFilter == .stash) {
+                                    carrierFilter = .stash
+                                }
+                                ForEach(carriers) { carrier in
+                                    FilterChip(carrier.name ?? "Unknown", isSelected: carrierFilter == .specific(carrier)) {
+                                        carrierFilter = .specific(carrier)
+                                    }
+                                }
+                            }
+                            .padding(.horizontal)
+                            .padding(.vertical, 8)
+                        }
+                        Divider()
+                    }
+
+                    if filteredLoot.isEmpty {
+                        if searchText.isEmpty {
+                            ContentUnavailableView(
+                                "No Items",
+                                systemImage: "person.crop.circle.badge.xmark",
+                                description: Text("No loot is assigned to this carrier.")
+                            )
+                        } else {
+                            ContentUnavailableView.search(text: searchText)
+                        }
+                    } else {
+                        List {
+                            ForEach(filteredLoot) { item in
                         Button {
                             selectedItem = item
                         } label: {
@@ -63,9 +111,11 @@ struct LootListView: View {
                             }
                             .tint(.blue)
                         }
+                        }
                     }
                 }
             }
+        }
         }
         .navigationTitle("D&D Loot")
         .toolbar {
@@ -102,6 +152,31 @@ struct LootListView: View {
         let event = LootEvent(type: eventType, itemName: item.name, itemID: item.id, campaign: campaign)
         modelContext.insert(event)
         item.quantity -= 1
+    }
+}
+
+struct FilterChip: View {
+    let label: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    init(_ label: String, isSelected: Bool, action: @escaping () -> Void) {
+        self.label = label
+        self.isSelected = isSelected
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.subheadline)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(isSelected ? Color.accentColor : Color(.systemGray5))
+                .foregroundStyle(isSelected ? Color.white : Color.primary)
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
     }
 }
 
