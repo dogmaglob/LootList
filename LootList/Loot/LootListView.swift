@@ -6,6 +6,7 @@ struct LootListView: View {
     @Query private var loot: [LootItem]
     @State private var showingAddSheet = false
     @State private var selectedItem: LootItem?
+    @State private var searchText = ""
 
     private let campaign: Campaign?
 
@@ -23,6 +24,11 @@ struct LootListView: View {
         )
     }
 
+    private var filteredLoot: [LootItem] {
+        guard !searchText.isEmpty else { return loot }
+        return loot.filter { $0.name.localizedStandardContains(searchText) }
+    }
+
     var body: some View {
         Group {
             if loot.isEmpty {
@@ -31,9 +37,11 @@ struct LootListView: View {
                     systemImage: "bag",
                     description: Text("Tap + to add loot from your adventure.")
                 )
+            } else if filteredLoot.isEmpty {
+                ContentUnavailableView.search(text: searchText)
             } else {
                 List {
-                    ForEach(loot) { item in
+                    ForEach(filteredLoot) { item in
                         Button {
                             selectedItem = item
                         } label: {
@@ -84,6 +92,7 @@ struct LootListView: View {
         .navigationDestination(item: $selectedItem) { item in
             EditLootView(item: item, campaign: campaign)
         }
+        .searchable(text: $searchText, prompt: "Search loot")
         .sheet(isPresented: $showingAddSheet) {
             AddLootView(campaign: campaign)
         }
