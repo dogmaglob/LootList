@@ -7,9 +7,11 @@ struct LootListView: View {
     @Query private var loot: [LootItem]
     @Query private var carriers: [Carrier]
     @State private var showingAddSheet = false
+    @State private var showingFilterSheet = false
     @State private var selectedItem: LootItem?
     @State private var searchText = ""
     @State private var carrierFilter: CarrierFilter = .all
+    @State private var filterState = LootFilterState()
 
     private let campaign: Campaign?
 
@@ -43,6 +45,25 @@ struct LootListView: View {
             result = result.filter { $0.carrier == nil }
         case .specific(let carrier):
             result = result.filter { $0.carrier?.id == carrier.id }
+        }
+        if !filterState.selectedCategories.isEmpty {
+            result = result.filter {
+                guard let id = $0.category?.id else { return false }
+                return filterState.selectedCategories.contains(id)
+            }
+        }
+        if let dateFrom = filterState.dateFrom {
+            result = result.filter { $0.dateAdded >= dateFrom }
+        }
+        if let dateTo = filterState.dateTo {
+            let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: dateTo))!
+            result = result.filter { $0.dateAdded < endOfDay }
+        }
+        if let min = Int(filterState.minValue) {
+            result = result.filter { $0.value >= min }
+        }
+        if let max = Int(filterState.maxValue) {
+            result = result.filter { $0.value <= max }
         }
         return result
     }
@@ -92,14 +113,14 @@ struct LootListView: View {
                     }
                     
                     if filteredLoot.isEmpty {
-                        if searchText.isEmpty {
+                        if !searchText.isEmpty {
+                            ContentUnavailableView.search(text: searchText)
+                        } else {
                             ContentUnavailableView(
                                 "No Items",
-                                systemImage: "person.crop.circle.badge.xmark",
-                                description: Text("No loot is assigned to this carrier.")
+                                systemImage: "line.3.horizontal.decrease.circle",
+                                description: Text("No loot matches the active filters.")
                             )
-                        } else {
-                            ContentUnavailableView.search(text: searchText)
                         }
                     } else {
                         List {
@@ -138,6 +159,17 @@ struct LootListView: View {
                     showingAddSheet = true
                 }
             }
+            ToolbarItem(placement: .primaryAction) {
+                Button(
+                    "Filter",
+                    systemImage: filterState.isActive
+                        ? "line.3.horizontal.decrease.circle.fill"
+                        : "line.3.horizontal.decrease.circle"
+                ) {
+                    showingFilterSheet = true
+                }
+                .tint(filterState.isActive ? .accentColor : .primary)
+            }
             ToolbarItem(placement: .navigation) {
                 NavigationLink {
                     CarriersView(campaign: campaign)
@@ -159,6 +191,9 @@ struct LootListView: View {
         .searchable(text: $searchText, prompt: "Search loot")
         .sheet(isPresented: $showingAddSheet) {
             AddLootView(campaign: campaign)
+        }
+        .sheet(isPresented: $showingFilterSheet) {
+            FilterSheetView(filterState: filterState)
         }
     }
 

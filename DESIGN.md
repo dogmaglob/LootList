@@ -251,6 +251,9 @@ Everything listed under **Future Features** below.
 
 ## Future Features (Planned, Not in v1)
 
+- Carrier filter chip animations: smooth, visually engaging transitions when chips reorder (e.g. spring animation, positional slide) rather than the default instant re-layout.
+- Improved filter UI: the current filter sheet is functional but basic. Research better filter UI patterns (e.g. inline filter bar, bottom drawer, token-based search) and redesign accordingly.
+
 - Loot splitting tools
 - Multi-denomination currency (CP/SP/GP/PP) with conversion
 - Encumbrance enforcement with configurable limits
