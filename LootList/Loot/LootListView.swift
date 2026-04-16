@@ -3,6 +3,7 @@ import SwiftData
 
 struct LootListView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(CarrierUsageStore.self) private var usageStore
     @Query private var loot: [LootItem]
     @Query private var carriers: [Carrier]
     @State private var showingAddSheet = false
@@ -38,12 +39,22 @@ struct LootListView: View {
         switch carrierFilter {
         case .all:
             break
-        case .stash:
+        case .unassigned:
             result = result.filter { $0.carrier == nil }
         case .specific(let carrier):
             result = result.filter { $0.carrier?.id == carrier.id }
         }
         return result
+    }
+
+    private var sortedCarriers: [Carrier] {
+        guard let campaignID = campaign?.id else { return carriers }
+        return carriers.sorted { a, b in
+            let countA = usageStore.count(for: a.id, campaignID: campaignID)
+            let countB = usageStore.count(for: b.id, campaignID: campaignID)
+            if countA != countB { return countA > countB }
+            return (a.name ?? "") < (b.name ?? "")
+        }
     }
 
     var body: some View {
@@ -62,11 +73,14 @@ struct LootListView: View {
                                 FilterChip("All", isSelected: carrierFilter == .all) {
                                     carrierFilter = .all
                                 }
-                                FilterChip("Stash", isSelected: carrierFilter == .stash) {
-                                    carrierFilter = .stash
+                                FilterChip("Unassigned", isSelected: carrierFilter == .unassigned) {
+                                    carrierFilter = .unassigned
                                 }
-                                ForEach(carriers) { carrier in
+                                ForEach(sortedCarriers) { carrier in
                                     FilterChip(carrier.name ?? "Unknown", isSelected: carrierFilter == .specific(carrier)) {
+                                        if let campaignID = campaign?.id {
+                                            usageStore.record(carrierID: carrier.id, campaignID: campaignID)
+                                        }
                                         carrierFilter = .specific(carrier)
                                     }
                                 }
@@ -76,7 +90,7 @@ struct LootListView: View {
                         }
                         Divider()
                     }
-
+                    
                     if filteredLoot.isEmpty {
                         if searchText.isEmpty {
                             ContentUnavailableView(
@@ -90,32 +104,32 @@ struct LootListView: View {
                     } else {
                         List {
                             ForEach(filteredLoot) { item in
-                        Button {
-                            selectedItem = item
-                        } label: {
-                            LootRowView(item: item)
-                        }
-                        .tint(.primary)
-                        .swipeActions(edge: .trailing) {
-                            Button("Delete", systemImage: "trash", role: .destructive) {
-                                let event = LootEvent(type: .deleted, itemName: item.name, itemID: item.id, campaign: campaign)
-                                modelContext.insert(event)
-                                item.isDeleted = true
+                                Button {
+                                    selectedItem = item
+                                } label: {
+                                    LootRowView(item: item)
+                                }
+                                .tint(.primary)
+                                .swipeActions(edge: .trailing) {
+                                    Button("Delete", systemImage: "trash", role: .destructive) {
+                                        let event = LootEvent(type: .deleted, itemName: item.name, itemID: item.id, campaign: campaign)
+                                        modelContext.insert(event)
+                                        item.isDeleted = true
+                                    }
+                                    Button("Sell", systemImage: "tag") {
+                                        perform(.sold, on: item)
+                                    }
+                                    .tint(.green)
+                                    Button("Use", systemImage: "checkmark") {
+                                        perform(.used, on: item)
+                                    }
+                                    .tint(.blue)
+                                }
                             }
-                            Button("Sell", systemImage: "tag") {
-                                perform(.sold, on: item)
-                            }
-                            .tint(.green)
-                            Button("Use", systemImage: "checkmark") {
-                                perform(.used, on: item)
-                            }
-                            .tint(.blue)
-                        }
                         }
                     }
                 }
             }
-        }
         }
         .navigationTitle("D&D Loot")
         .toolbar {

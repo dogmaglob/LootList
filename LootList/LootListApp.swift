@@ -11,6 +11,7 @@ import SwiftData
 @main
 struct LootListApp: App {
     @State private var appState = AppState()
+    @State private var carrierUsageStore = CarrierUsageStore()
 
     let container: ModelContainer = {
         let schema = Schema([
@@ -42,6 +43,7 @@ struct LootListApp: App {
         WindowGroup {
             CampaignListView()
                 .environment(appState)
+                .environment(carrierUsageStore)
                 .onAppear { seedCategoriesIfNeeded(in: container.mainContext) }
         }
         .modelContainer(container)
