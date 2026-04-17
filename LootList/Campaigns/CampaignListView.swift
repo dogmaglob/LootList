@@ -42,6 +42,15 @@ struct CampaignListView: View {
                 }
             }
             .navigationTitle("Campaigns")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    NavigationLink {
+                        SettingsView()
+                    } label: {
+                        Label("Settings", systemImage: "gear")
+                    }
+                }
+            }
             .navigationDestination(for: Campaign.self) { campaign in
                 LootListView(campaign: campaign)
                     .onAppear { appState.activeCampaign = campaign }

@@ -9,6 +9,9 @@ final class LootCategory {
     var name: String = ""
     var emoji: String = ""
 
+    @Relationship(deleteRule: .nullify, inverse: \LootItem.category)
+    var items: [LootItem]? = []
+
     init(name: String = "", emoji: String = "") {
         self.name = name
         self.emoji = emoji
